@@ -220,6 +220,19 @@ const DataTable = () => {
     return formattedData;
   }, [currentDate, allData]);
 
+  // Calculate the maximum length of 'object' field
+  const maxObjectLength = useMemo(() => {
+    if (!displayedData || displayedData.length === 0) return 0;
+    return Math.max(...displayedData.map((row) => row.object.length));
+  }, [displayedData]);
+
+  // Determine the font size based on the maximum object length
+  const objectFontSize = useMemo(() => {
+    if (maxObjectLength > 100) return "xs";
+    if (maxObjectLength > 50) return "sm";
+    return "md";
+  }, [maxObjectLength]);
+
   // Update selectedRow based on displayedData
   useEffect(() => {
     const initialRow =
@@ -515,7 +528,6 @@ const DataTable = () => {
                 size="sm"
                 mr={2}
               />
-            
             </Flex>
             <IconButton
               icon={<ChevronRightIcon />}
@@ -526,21 +538,29 @@ const DataTable = () => {
             />
           </Flex>
 
-          {/* Table Component */}
+          {/* Updated TableContainer with Hidden Scrollbar and Uniform Font Size */}
           <TableContainer
             overflowY="scroll"
             maxH="600px" // Adjust this value based on the approximate height of 10 rows
             overflowX="hidden" // Prevent horizontal scrolling
+            sx={{
+              /* Hide scrollbar for IE, Edge, and Firefox */
+              scrollbarWidth: "none", // Firefox
+              msOverflowStyle: "none", // IE 10+
+
+              /* Hide scrollbar for Chrome, Safari, and Opera */
+              "&::-webkit-scrollbar": {
+                display: "none",
+              },
+            }}
           >
             <Table variant="simple" size="sm" sx={{ tableLayout: "auto" }}>
               <Thead>
                 <Tr>
                   <Th
                     maxW="200px"
-                    isTruncated
-                    whiteSpace="nowrap"
-                    overflow="hidden"
-                    textOverflow="ellipsis"
+                    whiteSpace="normal" // Allow header text to wrap if needed
+                    wordBreak="break-word"
                     color="white" // Make label white
                   >
                     Object
@@ -550,32 +570,34 @@ const DataTable = () => {
                 </Tr>
               </Thead>
               <Tbody>
-                {displayedData.map((row, index) => {
-                  return (
-                    <Tr
-                      key={index}
-                      _hover={{
-                        cursor: "pointer",
-                      }}
-                      onClick={() => handleRowClick(row)}
-                      bg={
-                        selectedRow && selectedRow.object === row.object
-                          ? "rgba(255, 255, 255, 0.3)"
-                          : "transparent"
-                      } // Highlight the selected row
-                    >
-                      <Td>
-                        <Tooltip label={row.object} hasArrow>
-                          <Text isTruncated maxW="200px">
-                            {row.object}
-                          </Text>
-                        </Tooltip>
-                      </Td>
-                      <Td isNumeric>{row.percentage}</Td>
-                      <Td isNumeric>{row.amount}</Td>
-                    </Tr>
-                  );
-                })}
+                {displayedData.map((row, index) => (
+                  <Tr
+                    key={index}
+                    _hover={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() => handleRowClick(row)}
+                    bg={
+                      selectedRow && selectedRow.object === row.object
+                        ? "rgba(255, 255, 255, 0.3)"
+                        : "transparent"
+                    } // Highlight the selected row
+                  >
+                    <Td>
+                      <Tooltip label={row.object} hasArrow>
+                        <Text
+                          whiteSpace="normal" // Allow text to wrap
+                          wordBreak="break-word" // Break long words if necessary
+                          fontSize={objectFontSize} // Uniform font size based on max length
+                        >
+                          {row.object}
+                        </Text>
+                      </Tooltip>
+                    </Td>
+                    <Td isNumeric>{row.percentage}</Td>
+                    <Td isNumeric>{row.amount}</Td>
+                  </Tr>
+                ))}
               </Tbody>
               {/* Removed Tfoot to eliminate bottom labels */}
             </Table>
